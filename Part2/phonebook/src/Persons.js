@@ -1,4 +1,21 @@
-const Persons = ({persons, nameSearch}) => {
+import phonebookServices from "./services/phonebook";
+
+const Persons = ({ persons, nameSearch, setPersons }) => {
+  
+  const handleDelete = (id, name) => {
+    if (window.confirm("Delete " + name + "?")) {
+      phonebookServices.delete(id).then(() => {
+        phonebookServices.getAll().then((response) => {
+          setPersons(response.data);
+        })
+      }).catch(error => {
+        alert(
+          name + " was already deleted from server"
+        )
+      });
+    }
+  };
+
   return (
     <ul>
       {persons
@@ -8,7 +25,10 @@ const Persons = ({persons, nameSearch}) => {
             nameSearch === ""
         )
         .map((person) => (
-          <Person name={person.name} number={person.number} />
+          <div>
+            <Person name={person.name} number={person.number} />
+            <button onClick={() => handleDelete(person.id, person.name)}>delete</button>
+          </div>
         ))}
     </ul>
   );

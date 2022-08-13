@@ -1,9 +1,10 @@
 import { useState } from "react";
+import phonebookService from "./services/phonebook";
 
-const PersonForm = ({persons, setPersons}) => {
+const PersonForm = ({ persons, setPersons }) => {
   const [newNumber, setNewNumber] = useState("");
   const [newName, setNewName] = useState("");
-  
+
   const handleNameChange = (event) => {
     setNewName(event.target.value);
   };
@@ -19,10 +20,20 @@ const PersonForm = ({persons, setPersons}) => {
       number: newNumber,
       id: persons.lenght + 1,
     };
-    if (persons.some((person) => person.name === personObject.name))
-      alert(`${newName} is already added to phonebook`);
+    if (persons.some((person) => person.name === personObject.name)){
+      if(window.confirm(`${newName} is already added to phonebook, replace the old number with a new one? `)){
+        const object = persons.filter((person) => person.name === newName);
+        phonebookService.update(object[0].id, personObject).then((response) => {
+          phonebookService.getAll().then((response) => {
+            setPersons(response.data);
+          })
+        });
+      }
+    }
     else {
-      setPersons(persons.concat(personObject));
+      phonebookService.create(personObject).then((response) => {
+        setPersons(persons.concat(response.data));
+      });
       setNewName("");
       setNewNumber("");
     }
