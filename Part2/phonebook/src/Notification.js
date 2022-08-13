@@ -6,7 +6,6 @@ const Notification = ({ message, error }) => {
   const messageStyle = {
     color: error? "red" : "green",
     fontStyle: "italic",
-    fontSize: 16,
     backgroundColor: "lightgrey",
     fontSize: 20,
     borderStyle: "solid",
