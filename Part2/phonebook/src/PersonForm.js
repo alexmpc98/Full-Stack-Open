@@ -1,7 +1,7 @@
 import { useState } from "react";
 import phonebookService from "./services/phonebook";
 
-const PersonForm = ({ persons, setPersons }) => {
+const PersonForm = ({ persons, setPersons, setMessage, setError }) => {
   const [newNumber, setNewNumber] = useState("");
   const [newName, setNewName] = useState("");
 
@@ -26,13 +26,31 @@ const PersonForm = ({ persons, setPersons }) => {
         phonebookService.update(object[0].id, personObject).then((response) => {
           phonebookService.getAll().then((response) => {
             setPersons(response.data);
+            setMessage(
+              `Updated ${object[0].name}`
+            )
+            setTimeout(() => {
+              setMessage(null)
+            }, 5000)
           })
-        });
+        }).catch((error => {
+          setError(true);
+          setMessage(`Information of ${object[0].name} has already been removed from server`)
+          setTimeout(() => {
+            setMessage(null)
+          }, 5000)
+        }));
       }
     }
     else {
       phonebookService.create(personObject).then((response) => {
         setPersons(persons.concat(response.data));
+        setMessage(
+          `Added ${response.data.name}`
+        )
+        setTimeout(() => {
+          setMessage(null)
+        }, 5000)
       });
       setNewName("");
       setNewNumber("");
