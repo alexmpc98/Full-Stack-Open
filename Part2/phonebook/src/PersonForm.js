@@ -14,11 +14,11 @@ const PersonForm = ({ persons, setPersons, setMessage, setError }) => {
   };
 
   const addPerson = (event) => {
+    setError(false);
     event.preventDefault();
     const personObject = {
       name: newName,
-      number: newNumber,
-      id: persons.lenght + 1,
+      number: newNumber
     };
     if (persons.some((person) => person.name === personObject.name)){
       if(window.confirm(`${newName} is already added to phonebook, replace the old number with a new one? `)){
@@ -35,7 +35,7 @@ const PersonForm = ({ persons, setPersons, setMessage, setError }) => {
           })
         }).catch((error => {
           setError(true);
-          setMessage(`Information of ${object[0].name} has already been removed from server`)
+          setMessage(error.response.data.error)
           setTimeout(() => {
             setMessage(null)
           }, 5000)
@@ -51,7 +51,13 @@ const PersonForm = ({ persons, setPersons, setMessage, setError }) => {
         setTimeout(() => {
           setMessage(null)
         }, 5000)
-      });
+      }).catch((error => {
+        setError(true);
+        setMessage(error.response.data.error)
+        setTimeout(() => {
+          setMessage(null)
+        }, 5000)
+      }));
       setNewName("");
       setNewNumber("");
     }
