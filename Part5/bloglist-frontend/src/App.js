@@ -1,35 +1,35 @@
-import { useState, useEffect, useRef } from "react";
-import Blog from "./components/Blog";
-import blogService from "./services/blogs";
-import loginService from "./services/login";
-import LoginForm from "./LoginForm";
-import Togglable from "./Togglable";
-import BlogForm from "./BlogForm";
+import { useState, useEffect, useRef } from 'react'
+import Blog from './components/Blog'
+import blogService from './services/blogs'
+import loginService from './services/login'
+import LoginForm from './LoginForm'
+import Togglable from './Togglable'
+import BlogForm from './BlogForm'
 
 const App = () => {
-  const [blogs, setBlogs] = useState([]);
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const blogFormRef = useRef();
-  const blogRef = useRef();
+  const [blogs, setBlogs] = useState([])
+  const [username, setUsername] = useState('')
+  const [password, setPassword] = useState('')
+  const blogFormRef = useRef()
+  const blogRef = useRef()
 
-  const [user, setUser] = useState(null);
-  const [error, setError] = useState(null);
-  const [notificationMessage, setNotificationMessage] = useState("");
+  const [user, setUser] = useState(null)
+  const [error, setError] = useState(null)
+  const [notificationMessage, setNotificationMessage] = useState('')
 
   useEffect(() => {
-    blogService.getAll().then((blogs) => setBlogs(blogs));
-    const loggedUser = window.localStorage.getItem("loggedUser");
+    blogService.getAll().then((blogs) => setBlogs(blogs))
+    const loggedUser = window.localStorage.getItem('loggedUser')
     if (loggedUser) {
-      const user = JSON.parse(loggedUser);
-      setUser(user);
-      blogService.setToken(user.token);
+      const user = JSON.parse(loggedUser)
+      setUser(user)
+      blogService.setToken(user.token)
     }
-  }, []);
+  }, [])
 
   const loginForm = () => {
     return (
-      <Togglable buttonLabel="login">
+      <Togglable buttonLabel='login'>
         <LoginForm
           username={username}
           password={password}
@@ -38,34 +38,34 @@ const App = () => {
           handleSubmit={handleLogin}
         />
       </Togglable>
-    );
-  };
+    )
+  }
 
   const handleLogin = async (event) => {
-    event.preventDefault();
+    event.preventDefault()
     try {
       const user = await loginService.login({
         username,
         password,
-      });
-      window.localStorage.setItem("loggedUser", JSON.stringify(user));
-      blogService.setToken(user.token);
-      setUser(user);
-      setUsername("");
-      setPassword("");
+      })
+      window.localStorage.setItem('loggedUser', JSON.stringify(user))
+      blogService.setToken(user.token)
+      setUser(user)
+      setUsername('')
+      setPassword('')
     } catch (exception) {
-      setNotificationMessage("Wrong credentials");
-      setError(true);
+      setNotificationMessage('Wrong credentials')
+      setError(true)
       setTimeout(() => {
-        setNotificationMessage("");
-      }, 5000);
+        setNotificationMessage('')
+      }, 5000)
     }
-  };
+  }
 
   const handleLogout = async () => {
-    setUser(null);
-    window.localStorage.clear();
-  };
+    setUser(null)
+    window.localStorage.clear()
+  }
 
   const blogsArea = () => (
     <div>
@@ -83,114 +83,114 @@ const App = () => {
         ))}
       {blogForm()}
     </div>
-  );
+  )
 
   const addBlog = (blogObject) => {
-    blogFormRef.current.toggleVisibility();
+    blogFormRef.current.toggleVisibility()
     blogService
       .create(blogObject)
       .then((returnedBlog) => {
-        setBlogs(blogs.concat(returnedBlog));
+        setBlogs(blogs.concat(returnedBlog))
         setNotificationMessage(
-          "a new blog " +
+          'a new blog ' +
             returnedBlog.title +
-            " by " +
+            ' by ' +
             returnedBlog.author +
-            " added"
-        );
-        setError(false);
+            ' added'
+        )
+        setError(false)
         setTimeout(() => {
-          setNotificationMessage("");
-        }, 5000);
+          setNotificationMessage('')
+        }, 5000)
       })
       .catch(() => {
         setNotificationMessage(
-          "Something is wrong with your submission! Check your input again."
-        );
-        setError(true);
+          'Something is wrong with your submission! Check your input again.'
+        )
+        setError(true)
         setTimeout(() => {
-          setNotificationMessage("");
-        }, 5000);
-      });
-  };
+          setNotificationMessage('')
+        }, 5000)
+      })
+  }
 
   const addLikeBlog = (id, object) => {
-    blogRef.current.toggleVisibility();
+    blogRef.current.toggleVisibility()
     blogService
       .update(id, object)
       .then(() => {
         setNotificationMessage(
-          "blog " +
+          'blog ' +
             object.title +
-            " by " +
+            ' by ' +
             object.author +
-            " liked by " +
+            ' liked by ' +
             user.name
-        );
-        blogService.getAll().then((blogs) => setBlogs(blogs));
-        setError(false);
+        )
+        blogService.getAll().then((blogs) => setBlogs(blogs))
+        setError(false)
         setTimeout(() => {
-          setNotificationMessage("");
-        }, 5000);
+          setNotificationMessage('')
+        }, 5000)
       })
       .catch(() => {
         setNotificationMessage(
-          "Something is wrong with your submission! Check your input again."
-        );
-        setError(true);
+          'Something is wrong with your submission! Check your input again.'
+        )
+        setError(true)
         setTimeout(() => {
-          setNotificationMessage("");
-        }, 5000);
-      });
-  };
+          setNotificationMessage('')
+        }, 5000)
+      })
+  }
 
   const deleteOneBlog = (id, title, author) => {
-    blogRef.current.toggleVisibility();
-    if (window.confirm("Remove blog " + title + " by " + author)) {
+    blogRef.current.toggleVisibility()
+    if (window.confirm('Remove blog ' + title + ' by ' + author)) {
       blogService
         .deleteBlog(id)
         .then(() => {
           setNotificationMessage(
-            "blog " + title + " by " + author + " removed"
-          );
-          blogService.getAll().then((blogs) => setBlogs(blogs));
-          setError(false);
+            'blog ' + title + ' by ' + author + ' removed'
+          )
+          blogService.getAll().then((blogs) => setBlogs(blogs))
+          setError(false)
           setTimeout(() => {
-            setNotificationMessage("");
-          }, 5000);
+            setNotificationMessage('')
+          }, 5000)
         })
         .catch(() => {
           setNotificationMessage(
-            "Something is wrong with your operation. Are you removing a blog you created?"
-          );
-          setError(true);
+            'Something is wrong with your operation. Are you removing a blog you created?'
+          )
+          setError(true)
           setTimeout(() => {
-            setNotificationMessage("");
-          }, 5000);
-        });
+            setNotificationMessage('')
+          }, 5000)
+        })
     }
-  };
+  }
 
   const blogForm = () => (
-    <Togglable buttonLabel="new note" ref={blogFormRef}>
+    <Togglable buttonLabel='new note' ref={blogFormRef}>
       <BlogForm createBlog={addBlog} />
     </Togglable>
-  );
+  )
 
   const notificationStyle = {
-    color: error ? "red" : "green",
-    fontStyle: "italic",
-    backgroundColor: "lightgrey",
+    color: error ? 'red' : 'green',
+    fontStyle: 'italic',
+    backgroundColor: 'lightgrey',
     fontSize: 20,
-    borderStyle: "solid",
+    borderStyle: 'solid',
     borderRadius: 5,
     padding: 10,
     marginBottom: 10,
-  };
+  }
 
   return (
     <div>
-      {notificationMessage !== "" && (
+      {notificationMessage !== '' && (
         <div style={notificationStyle}>{notificationMessage}</div>
       )}
       {user === null ? (
@@ -203,7 +203,7 @@ const App = () => {
         </div>
       )}
     </div>
-  );
-};
+  )
+}
 
-export default App;
+export default App
