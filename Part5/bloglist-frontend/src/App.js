@@ -1,18 +1,21 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Blog from "./components/Blog";
 import blogService from "./services/blogs";
 import loginService from "./services/login";
+import LoginForm from "./LoginForm";
+import Togglable from "./Togglable";
+import BlogForm from "./BlogForm";
 
 const App = () => {
   const [blogs, setBlogs] = useState([]);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [title, setTitle] = useState("");
-  const [author, setAuthor] = useState("");
-  const [url, setUrl] = useState("");
+  const blogFormRef = useRef();
+  const blogRef = useRef();
+
   const [user, setUser] = useState(null);
   const [error, setError] = useState(null);
-  const [notificationMessage, setNotificationMessage] = useState('')
+  const [notificationMessage, setNotificationMessage] = useState("");
 
   useEffect(() => {
     blogService.getAll().then((blogs) => setBlogs(blogs));
@@ -24,32 +27,19 @@ const App = () => {
     }
   }, []);
 
-  const loginForm = () => (
-    <div>
-      <h1>Log in to application</h1>
-      <form onSubmit={handleLogin}>
-        <div>
-          username
-          <input
-            type="text"
-            value={username}
-            name="Username"
-            onChange={({ target }) => setUsername(target.value)}
-          />
-        </div>
-        <div>
-          password
-          <input
-            type="password"
-            value={password}
-            name="Password"
-            onChange={({ target }) => setPassword(target.value)}
-          />
-        </div>
-        <button type="submit">login</button>
-      </form>
-    </div>
-  );
+  const loginForm = () => {
+    return (
+      <Togglable buttonLabel="login">
+        <LoginForm
+          username={username}
+          password={password}
+          handleUsernameChange={({ target }) => setUsername(target.value)}
+          handlePasswordChange={({ target }) => setPassword(target.value)}
+          handleSubmit={handleLogin}
+        />
+      </Togglable>
+    );
+  };
 
   const handleLogin = async (event) => {
     event.preventDefault();
@@ -59,98 +49,136 @@ const App = () => {
         password,
       });
       window.localStorage.setItem("loggedUser", JSON.stringify(user));
+      blogService.setToken(user.token);
       setUser(user);
       setUsername("");
       setPassword("");
     } catch (exception) {
-      setNotificationMessage('Wrong credentials')
+      setNotificationMessage("Wrong credentials");
       setError(true);
       setTimeout(() => {
-        setNotificationMessage('')
-      }, 5000)
+        setNotificationMessage("");
+      }, 5000);
     }
   };
 
   const handleLogout = async () => {
     setUser(null);
-    window.localStorage.removeItem("loggedUser");
+    window.localStorage.clear();
   };
 
   const blogsArea = () => (
     <div>
       <h2>blogs</h2>
-      {blogs.map((blog) => (
-        <Blog key={blog.id} blog={blog} />
-      ))}
+      {blogs
+        .sort((a, b) => b.likes - a.likes)
+        .map((blog) => (
+          <Blog
+            key={blog.id}
+            blog={blog}
+            ref={blogRef}
+            deleteOneBlog={deleteOneBlog}
+            addLikeBlog={addLikeBlog}
+          />
+        ))}
       {blogForm()}
     </div>
   );
 
-  const blogForm = () => (
-    <div>
-      <h1>Create new</h1>
-      <form onSubmit={handleBlogSubmit}>
-        <div>
-          title:
-          <input
-            type="text"
-            value={title}
-            name="Title"
-            onChange={({ target }) => setTitle(target.value)}
-          />
-        </div>
-        <div>
-          author:
-          <input
-            type="text"
-            value={author}
-            name="Author"
-            onChange={({ target }) => setAuthor(target.value)}
-          />
-        </div>
-        <div>
-          url:
-          <input
-            type="text"
-            value={url}
-            name="Url"
-            onChange={({ target }) => setUrl(target.value)}
-          />
-        </div>
-        <button type="submit">create</button>
-      </form>
-    </div>
-  );
+  const addBlog = (blogObject) => {
+    blogFormRef.current.toggleVisibility();
+    blogService
+      .create(blogObject)
+      .then((returnedBlog) => {
+        setBlogs(blogs.concat(returnedBlog));
+        setNotificationMessage(
+          "a new blog " +
+            returnedBlog.title +
+            " by " +
+            returnedBlog.author +
+            " added"
+        );
+        setError(false);
+        setTimeout(() => {
+          setNotificationMessage("");
+        }, 5000);
+      })
+      .catch(() => {
+        setNotificationMessage(
+          "Something is wrong with your submission! Check your input again."
+        );
+        setError(true);
+        setTimeout(() => {
+          setNotificationMessage("");
+        }, 5000);
+      });
+  };
 
-  const handleBlogSubmit = async (event) => {
-    event.preventDefault();
-    try{
-      const blogObj = {
-        title: title,
-        author: author,
-        url: url
-      }
-      const note = await blogService.create(blogObj)
-      setTitle('')
-      setUrl('')
-      setAuthor('')
-      blogService.getAll().then((blogs) => setBlogs(blogs))
-      setNotificationMessage("a new blog " + note.title + " by " + note.author + " added")
-      setError(false);
-      setTimeout(() => {
-        setNotificationMessage('')
-      }, 5000)
-    } catch(exception) {
-      setNotificationMessage('Something is wrong with your submission! Check your input again.')
-      setError(true);
-      setTimeout(() => {
-        setNotificationMessage('')
-      }, 5000)
+  const addLikeBlog = (id, object) => {
+    blogRef.current.toggleVisibility();
+    blogService
+      .update(id, object)
+      .then(() => {
+        setNotificationMessage(
+          "blog " +
+            object.title +
+            " by " +
+            object.author +
+            " liked by " +
+            user.name
+        );
+        blogService.getAll().then((blogs) => setBlogs(blogs));
+        setError(false);
+        setTimeout(() => {
+          setNotificationMessage("");
+        }, 5000);
+      })
+      .catch(() => {
+        setNotificationMessage(
+          "Something is wrong with your submission! Check your input again."
+        );
+        setError(true);
+        setTimeout(() => {
+          setNotificationMessage("");
+        }, 5000);
+      });
+  };
+
+  const deleteOneBlog = (id, title, author) => {
+    blogRef.current.toggleVisibility();
+    if (window.confirm("Remove blog " + title + " by " + author)) {
+      blogService
+        .deleteBlog(id)
+        .then(() => {
+          setNotificationMessage(
+            "blog " + title + " by " + author + " removed"
+          );
+          blogService.getAll().then((blogs) => setBlogs(blogs));
+          setError(false);
+          setTimeout(() => {
+            setNotificationMessage("");
+          }, 5000);
+        })
+        .catch(() => {
+          setNotificationMessage(
+            "Something is wrong with your operation. Are you removing a blog you created?"
+          );
+          setError(true);
+          setTimeout(() => {
+            setNotificationMessage("");
+          }, 5000);
+        });
     }
   };
-  
+
+  const blogForm = () => (
+    <Togglable buttonLabel="new note" ref={blogFormRef}>
+      <BlogForm createBlog={addBlog} />
+    </Togglable>
+  );
+
   const notificationStyle = {
-    color: error? "red" : "green",
+    color: error ? "red" : "green",
     fontStyle: "italic",
     backgroundColor: "lightgrey",
     fontSize: 20,
@@ -162,10 +190,8 @@ const App = () => {
 
   return (
     <div>
-      { notificationMessage !== '' && (
-      <div style={notificationStyle}>
-        {notificationMessage}
-      </div>
+      {notificationMessage !== "" && (
+        <div style={notificationStyle}>{notificationMessage}</div>
       )}
       {user === null ? (
         loginForm()

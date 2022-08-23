@@ -7,8 +7,7 @@ const middleware = require('../utils/middleware')
 blogsRouter.get("/", async (request, response) => {
   const blogs = await Blog
     .find({}).populate('user', { username: 1, name: 1 })
-
-  response.json(blogs)
+  response.json(blogs.filter(blog => blog.user != undefined))
 })  
 
 blogsRouter.post("/", middleware.userExtractor, async (request, response, next) => {
@@ -51,20 +50,21 @@ blogsRouter.delete('/:id', middleware.userExtractor, async (request, response) =
   response.status(401).end()
 })
 
-blogsRouter.put('/:id', middleware.userExtractor, async (request, response) => {
+blogsRouter.put('/:id', async (request, response) => {
+  
   const body = request.body
   const blog = await Blog.findById(request.params.id)
   const newBlog = {
     title: blog.title,
     author: blog.author,
     url: blog.url,
+    user: blog.user? blog.user.toString(): '',
     likes: body.likes
   }
-  if(blog.user.toString() === request.user._id.toString()){
-    await Blog.findByIdAndUpdate(request.params.id, newBlog, { new: true })
-    response.status(200).end()
-  }
-  response.status(401).end()
+  
+  await Blog.findByIdAndUpdate(request.params.id, newBlog, { new: true })
+  response.status(200).end()
+
 })
 
 module.exports = blogsRouter
