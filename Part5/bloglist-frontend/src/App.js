@@ -68,7 +68,7 @@ const App = () => {
   }
 
   const blogsArea = () => (
-    <div>
+    <div id="listOfBlogs">
       <h2>blogs</h2>
       {blogs
         .sort((a, b) => b.likes - a.likes)
@@ -191,7 +191,7 @@ const App = () => {
   return (
     <div>
       {notificationMessage !== '' && (
-        <div style={notificationStyle}>{notificationMessage}</div>
+        <div className="notification" style={notificationStyle}>{notificationMessage}</div>
       )}
       {user === null ? (
         loginForm()
