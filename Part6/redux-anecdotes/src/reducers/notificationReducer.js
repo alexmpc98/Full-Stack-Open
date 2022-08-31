@@ -1,4 +1,5 @@
 import { createSlice } from '@reduxjs/toolkit'
+let timer
 
 const initialState = ''
 
@@ -7,13 +8,20 @@ const notificationSlice = createSlice({
     initialState,
     reducers: {
       setNotification(state, action) {
-        return state = "you voted " + action.payload
+        return state = action.payload
       },
-      removeNotification(state, action){
-        return state= initialState
-      }
     },
   })
 
+  export const setNotificationContent = (content, time) => {
+    return async dispatch => {
+      dispatch(setNotification(content))
+      clearTimeout(timer)
+      timer = setTimeout(() => {
+        dispatch(setNotification(''))
+      }, time * 1000)
+    }
+  }
+
 export default notificationSlice.reducer;
-export const { setNotification, removeNotification } = notificationSlice.actions
+export const { setNotification } = notificationSlice.actions
